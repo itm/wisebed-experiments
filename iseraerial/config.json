@@ -1,0 +1,21 @@
+{
+  "configurations" : 
+  [ 
+	  {
+		"nodeUrnsJsonFileUrl" : "http://wisebed.itm.uni-luebeck.de/rest/2.3/uzl/experiments/nodes?filter=JN5148",
+		"binaryProgramUrl" : "iSerAerial.jn5148.bin"
+	  },
+	  {
+		"nodeUrnsJsonFileUrl" : "http://wisebed.itm.uni-luebeck.de/rest/2.3/uzl/experiments/nodes?filter=JN5139",
+		"binaryProgramUrl" : "iSerAerial.jn5139r1.bin"
+	  },
+	  {
+		"nodeUrnsJsonFileUrl" : "http://wisebed.itm.uni-luebeck.de/rest/2.3/uzl/experiments/nodes?filter=pacemate",
+		"binaryProgramUrl" : "iSerAerial.pacemate.bin"
+	  },
+	  {
+		"nodeUrnsJsonFileUrl" : "http://wisebed.itm.uni-luebeck.de/rest/2.3/uzl/experiments/nodes?filter=telosb",
+		"binaryProgramUrl" : "iSerAerial.telosb.bin"
+	  }
+  ]
+}

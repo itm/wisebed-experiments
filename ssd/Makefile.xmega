@@ -1,0 +1,153 @@
+#------------------------------------------------------------------------------
+#-- DO NOT TOUCH - Modify Makefile.properties instead
+#------------------------------------------------------------------------------
+
+include Makefile.properties
+
+
+LD	= avr-gcc
+CCP	= avr-g++
+CC 	= avr-gcc
+AR 	= avr-ar
+AS 	= avr-as
+SIZE = avr-size
+OBJCOPY = avr-objcopy
+
+SRC_PATH = src
+
+#------------------------------------------------------------------------------
+#-- Set up the C compiler flags
+#------------------------------------------------------------------------------
+
+LOCAL_COMMON_FLAGS +=  -Isrc
+LOCAL_COMMON_FLAGS += -I$(ISENSE_PATH)/src
+LOCAL_COMMON_FLAGS += -DNDEBUG -Os -mmcu=$(MMCU)
+LOCAL_COMMON_FLAGS += -finline-limit=40
+# Output each function and static data in their own sections
+LOCAL_COMMON_FLAGS += -fdata-sections -ffunction-sections
+
+LOCAL_CFLAGS = 
+LOCAL_CPPFLAGS = -fno-exceptions -fconserve-space -fno-implicit-inline-templates -fno-rtti
+
+CFLAGS   += $(LOCAL_COMMON_FLAGS) $(LOCAL_CFLAGS)
+CPPFLAGS += $(LOCAL_COMMON_FLAGS) $(LOCAL_CPPFLAGS)
+
+#------------------------------------------------------------------------------
+#-- Set up the linker libraries
+#------------------------------------------------------------------------------
+
+
+#------------------------------------------------------------------------------
+#-- This converts the *.c/*.S source file names to the output file names in
+#-- the binary folder
+#------------------------------------------------------------------------------
+
+TMP_C_OBJECTS  = $(filter %.o,$(BLDSRCS:.c=.o))   
+TMP_CPP_OBJECTS= $(filter %.o,$(BLDSRCS:.cpp=.o))   
+
+C_OBJECTS  =$(TMP_C_OBJECTS:%=$(OBJS_PATH)/%)
+CPP_OBJECTS=$(TMP_CPP_OBJECTS:%=$(OBJS_PATH)/%)
+
+OBJECTS = $(C_OBJECTS) $(CPP_OBJECTS)
+
+#------------------------------------------------------------------------------
+#-- Set up the linker libraries
+#------------------------------------------------------------------------------
+
+ifeq ($(XMEGA_TYPE),128)
+	OBJS_PATH = bin/xmega128
+	MMCU = atxmega128a3
+	LOCAL_COMMON_FLAGS += -DISENSE_XMEGA -DISENSE_XMEGA_128
+	LIBFILE += $(ISENSE_PATH)/lib/xmega/iSenseLibraryXmega128.a
+else
+	ifeq ($(XMEGA_TYPE),192)
+		OBJS_PATH = bin/xmega192
+		MMCU = atxmega192a3
+		LOCAL_COMMON_FLAGS += -DISENSE_XMEGA -DISENSE_XMEGA_192
+		LIBFILE += $(ISENSE_PATH)/lib/xmega/iSenseLibraryXmega192.a
+	else
+		OBJS_PATH = bin/xmega
+		MMCU = atxmega256a3
+		LOCAL_COMMON_FLAGS += -DISENSE_XMEGA
+		LIBFILE = $(ISENSE_PATH)/lib/xmega/iSenseLibraryXmega.a
+	endif
+endif
+
+#------------------------------------------------------------------------------
+#-- Build rules for the main application
+#------------------------------------------------------------------------------
+
+all: buildbin assembler
+
+buildbin: $(OBJS_PATH)/$(TARGET).bin Makefile  
+
+assembler: $(OBJS_PATH)/$(TARGET).lss
+
+debug:
+	@echo -e "\n----- Objects of this build -------------------------- \
+	\n\tSources    : $(BLDSRCS) \
+	\n\tObjects    : $(OBJECTS) \
+	\n\tLibfiles   : $(LIBFILE) \
+	"
+
+#------------------------------------------------------------------------------
+#-- Build rules for the .c files
+#------------------------------------------------------------------------------
+	
+$(OBJS_PATH)/%.o: $(SRC_PATH)/%.cpp
+	@echo "----- Compiling (XMega$(XMEGA_TYPE)) $<"
+	mkdir -p `dirname $@`
+	$(CCP) $(CPPFLAGS) -MMD -c $< -o $@	
+	mv $(@:%.o=%.d) $(@:%.o=%.P)
+
+
+$(OBJS_PATH)/%.o: $(SRC_PATH)/%.c
+	@echo "----- Compiling (Xmega$(XMEGA_TYPE)) $<"
+	mkdir -p `dirname $@`
+	$(CC) $(CFLAGS) -MMD -c $< -o $@	
+	mv $(@:%.o=%.d) $(@:%.o=%.P)
+
+#------------------------------------------------------------------------------
+#-- Linker
+#------------------------------------------------------------------------------
+
+$(OBJS_PATH)/$(TARGET).elf: $(OBJECTS) $(LIBFILE)
+	@echo "----- Linking to $@"
+	$(LD)  -mmcu=$(MMCU) -T$(ISENSE_PATH)/lib/xmega/avrxmega6.x -Wl,-Map=$(OBJS_PATH)/Map.txt -Wl,-gc-sections -u xmega_id -o $@ $(LDFLAGS) $(OBJECTS) $(LIBFILE)
+
+#------------------------------------------------------------------------------
+#-- Copy the .or32 file to a .bin file
+#------------------------------------------------------------------------------
+
+$(OBJS_PATH)/$(TARGET).bin: $(OBJS_PATH)/$(TARGET).elf
+	@echo "----- Copying to binary $<"
+	$(SIZE) $<
+	$(OBJCOPY) -S -O binary $< $@
+
+#------------------------------------------------------------------------------
+#-- create the commentated assembler file
+#------------------------------------------------------------------------------
+
+$(OBJS_PATH)/$(TARGET).lss: $(OBJS_PATH)/$(TARGET).elf
+	@echo "----- creating .lss $<"
+	-avr-objdump -h -S $<  >$@
+
+#------------------------------------------------------------------------------
+#--  
+#------------------------------------------------------------------------------
+
+clean:
+	rm -rf $(OBJS_PATH)
+
+#------------------------------------------------------------------------------
+#-- End
+#------------------------------------------------------------------------------
+.PRECIOUS: %.o %.bin
+.PHONY: all buildbin debug buildlibs assembler
+.SUFFIXES:
+
+#------------------------------------------------------------------------------
+# Dependency lists
+#------------------------------------------------------------------------------
+-include $(BLDSRCS:%.c=$(OBJS_PATH)/%.P)
+-include $(BLDSRCS:%.cpp=$(OBJS_PATH)/%.P)

@@ -1,0 +1,13 @@
+{
+  "configurations" : 
+  [ 
+	  {
+		"nodeUrnsJsonFileUrl" : "http://wisebed.itm.uni-luebeck.de/rest/2.3/uzl/experiments/nodes?capability=pir&filter=0x21",
+		"binaryProgramUrl" : "image_pir.bin"
+	  },
+	  {
+		"nodeUrnsJsonFileUrl" : "http://wisebed.itm.uni-luebeck.de/rest/2.3/uzl/experiments/nodes?capability=temperature&filter=0x21",
+		"binaryProgramUrl" : "image_gw.bin"
+	  }
+  ]
+}

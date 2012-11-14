@@ -4,7 +4,7 @@ This project contains a set of configurations for [WISEBED](http://wisebed.eu) e
 
 How to use them
 -------------
-Copy the link to a .json file and go to the [WISEBED testbed GUI](http://wisebed.eu/site/testbed). 
+Copy the link to a .json file and go to the [WISEBED testbed GUI](http://wisebed.itm.uni-luebeck.de/). 
 Select a testbed, log in, create a reservation for a set of nodes, select this reservation, and go to
 the "Flash"-dialog. There, click on the "Load" button and paste the URL into the textfield and click ok.
 
